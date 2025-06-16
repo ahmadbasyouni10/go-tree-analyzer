@@ -16,11 +16,26 @@ type DiffEvent struct {
 	Position int
 }
 
+type Metrics struct {
+	NodesWalked      int
+	DiffsFound       int
+	SameOpsTotal     int
+	DiffTreeOpsTotal int
+	mu               sync.Mutex
+}
+
+// metrics with sync.Mutex to avoid racing and use echo to have a api that shows the metrics on a web page
+var appMetrics = Metrics{}
+
 // Walk traverses in inorder then sends each value into the channel
 func Walk(ctx context.Context, t *tree.Tree, ch chan int) {
 	if t == nil {
 		return
 	}
+
+	appMetrics.mu.Lock()
+	appMetrics.NodesWalked++
+	appMetrics.mu.Unlock()
 
 	select {
 	// if context is done, return early (only will happen if context is cancelled) so channel closed and ready to be read
@@ -51,6 +66,11 @@ func Walk(ctx context.Context, t *tree.Tree, ch chan int) {
 
 // Same checks if two trees have the same values in order traversal
 func Same(t1, t2 *tree.Tree) bool {
+
+	appMetrics.mu.Lock()
+	appMetrics.SameOpsTotal++
+	appMetrics.mu.Unlock()
+
 	ch1 := make(chan int)
 	ch2 := make(chan int)
 	// use waitgroup.add(1) outside of go routine if using wait groups
@@ -89,6 +109,10 @@ func Same(t1, t2 *tree.Tree) bool {
 
 // returns a receiver obly channel that will have DiffEvents
 func DiffTrees(ctx context.Context, t1, t2 *tree.Tree) <-chan DiffEvent {
+	appMetrics.mu.Lock()
+	appMetrics.DiffTreeOpsTotal++
+	appMetrics.mu.Unlock()
+
 	diffs := make(chan DiffEvent)
 	var wg sync.WaitGroup
 
@@ -136,11 +160,19 @@ func DiffTrees(ctx context.Context, t1, t2 *tree.Tree) <-chan DiffEvent {
 				} else {
 					diffs <- DiffEvent{Type: "Missing Node T1", Value1: 0, Value2: v2, Position: position}
 				}
+				// diff found, increment the diffs found metric
+				appMetrics.mu.Lock()
+				appMetrics.DiffsFound++
+				appMetrics.mu.Unlock()
 				// keep going to get the rest of values for the channel open
 				continue
 			}
 			if v1 != v2 {
 				diffs <- DiffEvent{Type: "Different Values", Value1: v1, Value2: v2, Position: position}
+
+				appMetrics.mu.Lock()
+				appMetrics.DiffsFound++
+				appMetrics.mu.Unlock()
 			}
 		}
 	}()
@@ -226,5 +258,3 @@ func main() {
 
 	time.Sleep(250 * time.Millisecond) // sleep to let the consumer go routine to react to cancellation
 }
-
-// metrics with sync.Mutex to avoid racing and use echo to have a api that shows the metrics on a web page
