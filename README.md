@@ -2,40 +2,36 @@
 
 ### Overview
 
-I was learning Go’s concurrency and wanted to try it on something practical. So I built a binary tree analyzer to see how fast and efficient tree operations like walking, comparing, and finding differences could be when done in parallel. I also added a live metrics system to track performance and see what’s going on under the hood.
+While learning Go concurrency, I wanted a fun project to apply it to. So I built a tool that analyzes walking binary trees, comparing them, and finding differences all in parallel. It also exposes live performance metrics so I can see how well everything runs under the hood.
 
-### How it Works
+### What it does
 
-At a high level:
+- Spawns goroutines to walk and compare trees concurrently.
 
-* My main application kicks off various tree analysis tasks.
+- Uses channels to pass values and diff messages between routines.
 
-* These tasks, like walking a tree or comparing two, spawn off **goroutines**, which are Go's lightweight concurrent functions to get things done in parallel.
+- Relies on sync.WaitGroup to coordinate task completion.
 
-* **Channels** are the lifelines here. They're how different goroutines talk to each other, passing tree values or `DiffEvent` messages without getting in a tangle.
+- Applies sync.Mutex to safely update shared performance counters.
 
-* For coordinating when all the concurrent work for a task is done, **`sync.WaitGroup`** ensures that no part of the program jumps ahead before its dependencies are complete.
+- Runs a simple HTTP server to expose runtime metrics.
 
-* And because multiple parts of my concurrent code are updating shared performance counters, I'm using a **`sync.Mutex`** (a mutual exclusion lock) to make sure these updates happen safely, preventing any weird data races.
+⚡ **Pros:**
 
-* Finally, there's a small **HTTP server** that exposes these performance metrics which provides a a live window into the application's activity.
+- High Performance: Makes full use of Go's lightweight goroutines and scheduler.
 
-**Pros:**
+- Smart Error Handling: Graceful exits with context cancellation & timeouts.
 
-* **Efficient Concurrency:** Operations like tree traversal and comparison run in parallel, making the most of available CPU cores (actually not a limitation in go, since routines are extremely light weight so 1k routines could be spinned up by 1 thread for example bc of runtime scheduler).
+- Built in Observability: Exposes real-time metrics through an HTTP endpoint.
 
-* **Robust Error Handling:** Using `context` allows for graceful cancellation and timeouts, preventing runaway goroutines.
+- Clean Concurrency: Uses channels and mutexes to avoid common race bugs.
 
-* **Observability Built-in:** The metrics system provides valuable insights into the application's runtime behavior, both instantaneously via HTTP and over time through logged data.
-
-* **Clear Design:** The use of channels for communication and mutexes for shared state management keeps the concurrent code organized and less prone to common concurrency bugs.
-
-**Cons:**
+📦 **Cons:**
 * **Verbosity in `Walk`:** The `time.Sleep` calls in `Walk` are there for demonstration purposes (to see context cancellation more clearly), but in a real-world scenario, they would be removed to maximize performance.
 
 ### Future Enhancements
 
-If I were to continue developing this, here are a few ideas:
+If I was to continue developing this:
 * **Configurable Tree Generation:** Allow users to specify tree size or structure more flexibly.
 * **Comparative Benchmarking:** Implement different tree traversal algorithms (e.g., BFS, DFS) and benchmark their performance using the existing metrics system to compare their efficiency.
 * **Interactive Web UI:** Instead of just a raw `/metrics` endpoint, build a simple web UI to display metrics in real-time within the browser using websockets or periodic AJAX requests.
