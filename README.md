@@ -7,17 +7,27 @@ I was learning Go’s concurrency and wanted to try it on something practical. S
 ### How it Works
 
 At a high level:
+
 * My main application kicks off various tree analysis tasks.
+
 * These tasks, like walking a tree or comparing two, spawn off **goroutines**, which are Go's lightweight concurrent functions to get things done in parallel.
+
 * **Channels** are the lifelines here. They're how different goroutines talk to each other, passing tree values or `DiffEvent` messages without getting in a tangle.
+
 * For coordinating when all the concurrent work for a task is done, **`sync.WaitGroup`** ensures that no part of the program jumps ahead before its dependencies are complete.
+
 * And because multiple parts of my concurrent code are updating shared performance counters, I'm using a **`sync.Mutex`** (a mutual exclusion lock) to make sure these updates happen safely, preventing any weird data races.
+
 * Finally, there's a small **HTTP server** that exposes these performance metrics which provides a a live window into the application's activity.
 
 **Pros:**
+
 * **Efficient Concurrency:** Operations like tree traversal and comparison run in parallel, making the most of available CPU cores (actually not a limitation in go, since routines are extremely light weight so 1k routines could be spinned up by 1 thread for example bc of runtime scheduler).
+
 * **Robust Error Handling:** Using `context` allows for graceful cancellation and timeouts, preventing runaway goroutines.
+
 * **Observability Built-in:** The metrics system provides valuable insights into the application's runtime behavior, both instantaneously via HTTP and over time through logged data.
+
 * **Clear Design:** The use of channels for communication and mutexes for shared state management keeps the concurrent code organized and less prone to common concurrency bugs.
 
 **Cons:**
