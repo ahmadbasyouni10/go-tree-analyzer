@@ -1,9 +1,8 @@
 # Go Concurrent Tree Analyzer
 
-![Untitled design (1)](https://github.com/user-attachments/assets/49ef2481-6fdd-439a-b29e-d7b350ad53e6)
-
-
 ### Overview
+
+![Untitled design (8)](https://github.com/user-attachments/assets/8f4cd5a2-62f0-4f18-a7cb-fa6396d6294b)
 
 While learning Go concurrency, I wanted a fun project to apply it to. So I built a tool that analyzes walking binary trees, comparing them, and finding differences all in parallel. It also exposes live performance metrics so I can see how well everything runs under the hood.
 
