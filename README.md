@@ -2,7 +2,7 @@
 
 ### Overview
 
-![image](https://github.com/user-attachments/assets/c01e908e-63bc-44e8-b91f-b31cbbadb160)
+![Untitled design (9)](https://github.com/user-attachments/assets/1239c4ad-de0e-4f50-8882-bd375fbc30af)
 
 While learning Go concurrency, I wanted a fun project to apply it to. So I built a tool that analyzes walking binary trees, comparing them, and finding differences all in parallel. It also exposes live performance metrics so I can see how well everything runs under the hood.
 
